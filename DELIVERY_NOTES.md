@@ -1,6 +1,6 @@
 # 网页工作台完善说明
 
-验证日期：2026-11-24。基于新增 ZIP 中的网页源码继续完善，许可证为 MIT。本次为本地源码交付；不表示已部署到公网或已在 GitHub 执行 CI。
+验证日期：2026-11-24。基于新增 ZIP 中的网页源码继续完善，许可证为 MIT。下表记录本地验证结果；GitHub 同步后的自动检查结果见仓库 [Actions](https://github.com/zx150737/study-cockpit/actions)。源码发布不代表已部署到公网。
 
 ## 本次内容
 
@@ -36,7 +36,7 @@ HTTP 联调覆盖：未登录改密、缺失 CSRF、错误当前密码、新旧�
 
 备份验证覆盖：导出进程失败、残缺文件清理、既有备份保留、过期文件清理范围、参数校验、只授予 SELECT 权限的账号真实导出，以及恢复到独立库后 `sys_user`、`study_goal`、`study_subject`、`daily_task` 的记录数一致。
 
-本机 Java 为 21，按 Maven `release=17` 编译；Node.js 22.23.2，pnpm 11.7.0。CI 配置的 JDK 17 / Linux 执行结果尚未产生。
+本机 Java 为 21，按 Maven `release=17` 编译；Node.js 22.23.2，pnpm 11.7.0。CI 使用 JDK 17 / Linux，其执行结果以对应提交的 Actions 记录为准。
 
 内置浏览器连接失败，报错为 `failed to write kernel assets: 系统找不到指定的路径`。经用户授权改用本机 Edge 的 Playwright 自动化，未使用真实账号或真实学习数据。
 
@@ -49,7 +49,7 @@ HTTP 联调覆盖：未登录改密、缺失 CSRF、错误当前密码、新旧�
 
 ## 尚未验证的发布环节
 
-- 本次未推送 GitHub，GitHub Actions 和 Dependabot 未在远端实际执行。
+- GitHub Actions 随 main 分支更新执行；Dependabot 按每周计划检查依赖。是否执行及结果以仓库对应记录为准。
 - Nginx、HTTPS、Linux 文件权限、systemd 与 cron 仍需在实际服务器验证；Windows 上的备份测试不能代替这些部署检查。
 - 页面实测为桌面 Edge 和模拟手机尺寸，未覆盖真实手机、微信内置浏览器或所有业务路径。
 - 现有实现支持多个账号按用户隔离业务数据；不是完整的公开注册、找回密码或管理员管理平台。
