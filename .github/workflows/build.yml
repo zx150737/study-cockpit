@@ -15,7 +15,8 @@ jobs:
     name: Backend (Maven verify)
     runs-on: ubuntu-latest
     defaults:
-      working-directory: backend
+      run:
+        working-directory: backend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,7 +33,8 @@ jobs:
     name: Frontend (typecheck / lint / build)
     runs-on: ubuntu-latest
     defaults:
-      working-directory: frontend
+      run:
+        working-directory: frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
