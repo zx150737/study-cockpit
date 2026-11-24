@@ -1,9 +1,11 @@
 """Validate a fresh HTTPS deployment using synthetic users (CI or a dedicated test server)."""
 import http.cookiejar
+import base64
 import json
 import os
 import secrets
 import ssl
+import subprocess
 import urllib.error
 import urllib.request
 
@@ -16,13 +18,13 @@ class Client:
         self.jar = http.cookiejar.CookieJar()
         self.opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=context), urllib.request.HTTPCookieProcessor(self.jar))
 
-    def send(self, path, method='GET', body=None, csrf=True):
-        headers = {'Content-Type': 'application/json'}
+    def send(self, path, method='GET', body=None, csrf=True, content_type='application/json'):
+        headers = {'Content-Type': content_type}
         token = next((c.value for c in self.jar if c.name == 'XSRF-TOKEN'), None)
         if token and csrf:
             headers['X-XSRF-TOKEN'] = token
         req = urllib.request.Request(base + path, method=method, headers=headers,
-                                     data=json.dumps(body).encode() if body is not None else None)
+                                     data=body if isinstance(body, bytes) else json.dumps(body).encode() if body is not None else None)
         try:
             response = self.opener.open(req, timeout=30)
         except urllib.error.HTTPError as error:
@@ -57,6 +59,24 @@ for client, username in ((a, 'smoke_a_'+suffix), (b, 'smoke_b_'+suffix)):
 goal = check(a.send('/api/goals', 'POST', {'name': 'Private synthetic goal'}), 200, 'create private goal')['data']
 assert check(b.send('/api/goals'), 200, 'other account list')['data'] == []
 check(b.send('/api/goals/'+str(goal['id']), 'PUT', {'name': 'forbidden'}), 404, 'other account cannot edit goal')
+subject = check(a.send('/api/subjects', 'POST', {'goalId': goal['id'], 'name': 'Test subject', 'defaultWeight': 1}), 200, 'create subject')['data']
+task = check(a.send('/api/tasks', 'POST', {'goalId': goal['id'], 'subjectId': subject['id'], 'title': 'Persistent test task', 'taskDate': '2026-11-24'}), 200, 'create task')['data']
+png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aM9sAAAAASUVORK5CYII=')
+boundary = 'cockpit-smoke-' + suffix
+multipart = (f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="test.png"\r\nContent-Type: image/png\r\n\r\n').encode() + png + (f'\r\n--{boundary}--\r\n').encode()
+image = check(a.send('/api/tasks/'+str(task['id'])+'/images', 'POST', multipart, content_type='multipart/form-data; boundary='+boundary), 200, 'upload persistent image')['data']
+check(b.send(image['temporaryUrl']), 404, 'other account cannot view signed image')
 check(a.send('/api/auth/logout', 'POST'), 200, 'logout')
 check(a.send('/api/goals'), 401, 'logged-out session denied')
+
+if os.environ.get('SMOKE_RECREATE') == 'true':
+    # Only for an isolated test deployment: keep named volumes while replacing containers.
+    subprocess.run(['docker', 'compose', 'up', '-d', '--force-recreate', '--wait', '--wait-timeout', '240'], check=True)
+    restored = Client()
+    check(restored.send('/api/auth/csrf'), 200, 'CSRF after container recreation')
+    check(restored.send('/api/auth/login', 'POST', {'username': 'smoke_a_'+suffix, 'password': password}), 200, 'account survives container recreation')
+    assert check(restored.send('/api/goals'), 200, 'goal survives recreation')['data'][0]['id'] == goal['id']
+    images = check(restored.send('/api/tasks/'+str(task['id'])+'/images'), 200, 'image metadata survives recreation')['data']
+    assert images[0]['id'] == image['id']
+    assert check(restored.send(images[0]['temporaryUrl']), 200, 'image bytes survive recreation') == png
 print(f'HTTPS smoke checks passed: {checks}')

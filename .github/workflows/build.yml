@@ -87,8 +87,11 @@ jobs:
             if docker compose cp web:/data/caddy/pki/authorities/local/root.crt /tmp/cockpit-ca.crt; then break; fi
             sleep 2
           done
-          SMOKE_CA_FILE=/tmp/cockpit-ca.crt python3 deploy/docker/smoke-test.py
+          SMOKE_CA_FILE=/tmp/cockpit-ca.crt SMOKE_RECREATE=true python3 deploy/docker/smoke-test.py
           bash deploy/docker/backup.sh
+          docker compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -u root -e "CREATE DATABASE cockpit_restore;"'
+          gzip -dc backups/study_cockpit_*.sql.gz | docker compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -u root cockpit_restore'
+          docker compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -u root -N -e "SELECT (SELECT COUNT(*) FROM study_cockpit.sys_user)=(SELECT COUNT(*) FROM cockpit_restore.sys_user) AND (SELECT COUNT(*) FROM study_cockpit.daily_task)=(SELECT COUNT(*) FROM cockpit_restore.daily_task);"' | grep -qx 1
       - name: Show service logs on failure
         if: failure()
         run: docker compose logs --tail=120
