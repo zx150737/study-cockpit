@@ -40,20 +40,40 @@
           积压 {{ overdueTotal }}
         </el-tag>
         <span class="user-name">{{ store.user?.nickname || store.user?.username }}</span>
+        <el-button text @click="pwdDialog = true">修改密码</el-button>
         <el-button text @click="doLogout">退出</el-button>
       </el-header>
       <el-main class="main"><router-view /></el-main>
     </el-container>
+
+    <!-- 修改密码弹窗 -->
+    <el-dialog v-model="pwdDialog" title="修改密码" width="min(380px, 92vw)" :close-on-click-modal="!pwdSubmitting" :close-on-press-escape="!pwdSubmitting" :show-close="!pwdSubmitting" @closed="resetPwdForm">
+      <el-form ref="pwdFormRef" :model="pwdForm" :rules="pwdRules" label-width="110px">
+        <el-form-item label="当前密码" prop="oldPassword">
+          <el-input v-model="pwdForm.oldPassword" type="password" show-password autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input v-model="pwdForm.newPassword" type="password" show-password autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="确认新密码" prop="confirmPassword">
+          <el-input v-model="pwdForm.confirmPassword" type="password" show-password autocomplete="off" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button :disabled="pwdSubmitting" @click="pwdDialog = false">取消</el-button>
+        <el-button type="primary" :loading="pwdSubmitting" @click="submitPwd">确认修改</el-button>
+      </template>
+    </el-dialog>
   </el-container>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ElMessageBox } from 'element-plus';
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import { DataAnalysis, Aim, List, TrendCharts, FolderOpened, Menu } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
-import { notificationApi } from '@/api';
+import { authApi, notificationApi } from '@/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -94,6 +114,60 @@ async function doLogout() {
   }
   await store.logout();
   router.replace('/login');
+}
+
+// ---------- 修改密码 ----------
+const pwdDialog = ref(false);
+const pwdSubmitting = ref(false);
+const pwdFormRef = ref<FormInstance>();
+const pwdForm = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' });
+
+const validateConfirm = (_: unknown, value: string, callback: (err?: string) => void) => {
+  if (value !== pwdForm.newPassword) {
+    callback('两次输入的新密码不一致');
+  } else {
+    callback();
+  }
+};
+
+const pwdRules: FormRules = {
+  oldPassword: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 8, max: 128, message: '新密码长度需在 8~128 之间', trigger: 'blur' },
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    { validator: validateConfirm, trigger: 'blur' },
+  ],
+};
+
+async function submitPwd() {
+  if (!pwdFormRef.value) return;
+  const valid = await pwdFormRef.value.validate().catch(() => false);
+  if (!valid) return;
+  pwdSubmitting.value = true;
+  try {
+    await authApi.changePassword({
+      oldPassword: pwdForm.oldPassword,
+      newPassword: pwdForm.newPassword,
+    });
+    ElMessage.success('密码已修改，请重新登录');
+    pwdDialog.value = false;
+    store.clearUser();
+    router.replace('/login');
+  } catch {
+    // 请求拦截器已显示错误，保留表单供用户修正后重试。
+  } finally {
+    pwdSubmitting.value = false;
+  }
+}
+
+function resetPwdForm() {
+  pwdFormRef.value?.resetFields();
+  pwdForm.oldPassword = '';
+  pwdForm.newPassword = '';
+  pwdForm.confirmPassword = '';
 }
 </script>
 

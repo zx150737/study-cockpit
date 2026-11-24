@@ -4,7 +4,8 @@
       <!-- 历史周快照 -->
       <div class="panel">
         <div class="panel-title">历史周结算记录</div>
-        <el-table v-loading="loadingWeeks" :data="weeks" size="small" highlight-current-row
+        <el-table
+v-loading="loadingWeeks" :data="weeks" size="small" highlight-current-row
                   empty-text="暂无结算记录（每周日 23:59 生成）" @current-change="onSelectWeek">
           <el-table-column prop="weekStart" label="周起始" width="115" />
           <el-table-column prop="weekEnd" label="周结束" width="115" />
@@ -14,8 +15,9 @@
           <el-table-column prop="taskTotal" label="任务" width="65" />
           <el-table-column prop="checkinDays" label="打卡" width="65" />
         </el-table>
-        <el-pagination class="pager" background layout="total, prev, pager, next"
-                       :total="weekTotal" v-model:current-page="weekPage" :page-size="weekSize"
+        <el-pagination
+v-model:current-page="weekPage" class="pager" background
+                       layout="total, prev, pager, next" :total="weekTotal" :page-size="weekSize"
                        @current-change="loadWeeks" />
       </div>
 
@@ -49,7 +51,8 @@
       <div class="panel-title row-between">
         <span>历史任务归档</span>
         <div class="filter-bar">
-          <el-date-picker v-model="taskWeek" type="date" value-format="YYYY-MM-DD"
+          <el-date-picker
+v-model="taskWeek" type="date" value-format="YYYY-MM-DD"
                           placeholder="按周筛选" style="width:160px" clearable @change="reloadTasks" />
           <el-select v-model="taskGoalId" placeholder="全部目标" clearable style="width:160px" @change="reloadTasks">
             <el-option v-for="g in goals" :key="g.id" :label="g.name" :value="g.id" />
@@ -72,8 +75,9 @@
         <el-table-column prop="mastery" label="掌握度" width="80" />
         <el-table-column prop="reviewNote" label="复盘备注" min-width="160" show-overflow-tooltip />
       </el-table>
-      <el-pagination class="pager" background layout="total, prev, pager, next, sizes"
-                     :total="taskTotal" v-model:current-page="taskPage" v-model:page-size="taskSize"
+      <el-pagination
+v-model:current-page="taskPage" v-model:page-size="taskSize" class="pager"
+                     background layout="total, prev, pager, next, sizes" :total="taskTotal"
                      :page-sizes="[20, 50, 100]" @current-change="loadTasks" @size-change="reloadTasks" />
     </div>
   </div>

@@ -8,7 +8,8 @@
           <el-input v-model="form.username" placeholder="用户名" :prefix-icon="User" size="large" autocomplete="username" />
         </el-form-item>
         <el-form-item>
-          <el-input v-model="form.password" type="password" show-password placeholder="密码"
+          <el-input
+v-model="form.password" type="password" show-password placeholder="密码"
                     :prefix-icon="Lock" size="large" autocomplete="current-password" />
         </el-form-item>
         <el-button type="primary" size="large" class="login-btn" :loading="loading" @click="submit">
@@ -53,6 +54,8 @@ async function submit(): Promise<void> {
     const user = await authApi.login({ username: form.username.trim(), password: form.password });
     store.setUser(user);
     router.replace(typeof route.query.redirect === 'string' ? route.query.redirect : '/dashboard');
+  } catch {
+    // 请求拦截器已显示错误，留在登录页允许再次输入。
   } finally {
     loading.value = false;
   }

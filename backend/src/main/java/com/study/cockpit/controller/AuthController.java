@@ -49,4 +49,11 @@ public class AuthController {
     public Result<AuthDTO.UserVO> me() {
         return Result.ok(authService.currentUser(SecurityUtils.getUserId()));
     }
+
+    /** 修改密码：校验旧密码，成功后旧 JWT 全部失效，需重新登录 */
+    @PostMapping("/change-password")
+    public Result<Void> changePassword(@Valid @RequestBody AuthDTO.ChangePasswordReq req) {
+        authService.changePassword(SecurityUtils.getUserId(), req);
+        return Result.ok();
+    }
 }

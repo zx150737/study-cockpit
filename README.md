@@ -35,7 +35,7 @@ deploy/      环境变量模板、Nginx/systemd 配置和初始化脚本
 
 ## 本地启动
 
-准备 JDK 17、Maven 3.9+、Node.js 22、pnpm 和 MySQL 8。
+准备 JDK 17、Maven 3.9+、Node.js 22、pnpm 11.7.0 和 MySQL 8。前端通过 `packageManager` 固定 pnpm 版本，CI 使用相同版本。
 
 ### 1. 初始化数据库
 
@@ -92,14 +92,22 @@ pnpm dev
 
 ```sh
 # frontend 目录
+pnpm install --frozen-lockfile
 pnpm typecheck
+pnpm lint
 pnpm build
 
 # backend 目录
-mvn clean package
+mvn clean verify
 ```
 
 前端产物位于 `frontend/dist/`，后端产物位于 `backend/target/`，均不提交到源码仓库。
+
+## 账号与密码
+
+- 首次部署按部署文档创建账号；登录后可在页面右上角「修改密码」更新口令。
+- 修改密码需校验当前密码；密码和会话版本在同一条数据库更新中写入，成功后该账号的旧登录态全部失效，需重新登录。
+- 生产环境保持 `APP_ALLOW_REGISTER=false`，避免注册入口被外部使用。
 
 ## 服务器部署
 
@@ -115,6 +123,10 @@ GitHub 仓库用于分享源码；将代码开源不会自动把 Java 后端、�
 - 邮件通知和对象存储仅预留接口，未实现发送服务或云存储接入。
 - 架构文档保留了早期设计内容，当前实现以源码为准。
 - 公开源码不代表完成生产环境安全审计；部署前应审阅依赖版本、配置和备份策略。
+
+## 备份
+
+数据库需定期备份，图片 15 天自动过期无需长期归档。可使用 `deploy/scripts/backup-db.sh`，配合 cron 每日执行，默认保留 14 天备份。脚本先生成临时文件，压缩校验通过后才发布备份并清理过期文件；备份失败会保留既有备份。配置与恢复示例见部署文档「备份、升级与回滚」章节。
 
 ## 许可证
 

@@ -106,6 +106,31 @@ public class AuthService {
         return toVO(user);
     }
 
+    /**
+     * 修改密码。
+     * 1. 校验旧密码（constant-time 比对，失败不区分用户是否存在）；
+     * 2. 新密码 BCrypt(12) 加盐存储；
+     * 3. token_version +1，使该用户所有旧 JWT 立即失效，强制重新登录。
+     */
+    public void changePassword(Long userId, AuthDTO.ChangePasswordReq req) {
+        SysUser user = sysUserMapper.selectById(userId);
+        if (user == null || user.getStatus() == null || user.getStatus() != 1) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
+        if (!passwordEncoder.matches(req.getOldPassword(), user.getPassword())) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "当前密码不正确");
+        }
+        if (passwordEncoder.matches(req.getNewPassword(), user.getPassword())) {
+            throw new BusinessException(ResultCode.PARAM_ERROR, "新密码不能与当前密码相同");
+        }
+        int updated = sysUserMapper.changePassword(userId,
+                passwordEncoder.encode(req.getNewPassword()), user.getTokenVersion());
+        if (updated != 1) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "账号状态已变化，请重新登录");
+        }
+        log.info("密码已修改 userId={}，旧会话已失效", userId);
+    }
+
     private ResponseCookie buildCookie(String value, long maxAgeSeconds) {
         return ResponseCookie.from(props.getJwtCookieName(), value)
                 .httpOnly(true)

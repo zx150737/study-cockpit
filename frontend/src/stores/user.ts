@@ -31,8 +31,11 @@ export const useUserStore = defineStore('user', {
       } catch {
         // 注销失败也清理前端状态
       }
+      this.clearUser();
+    },
+    clearUser(): void {
       this.user = null;
-      this.checked = false;
+      this.checked = true;
     },
     setUser(user: UserVO): void {
       this.user = user;

@@ -39,4 +39,16 @@ public class AuthDTO {
         private String username;
         private String nickname;
     }
+
+    /** 修改密码请求：校验旧密码，BCrypt 存新密文，改密后旧 JWT 全部失效 */
+    @Data
+    public static class ChangePasswordReq {
+        @NotBlank(message = "当前密码不能为空")
+        @Size(max = 128, message = "密码过长")
+        private String oldPassword;
+
+        @NotBlank(message = "新密码不能为空")
+        @Size(min = 8, max = 128, message = "新密码长度需在 8~128 之间")
+        private String newPassword;
+    }
 }

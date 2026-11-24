@@ -12,6 +12,9 @@ export const authApi = {
     post<UserVO>('/auth/register', data),
   logout: () => post<void>('/auth/logout'),
   me: () => get<UserVO>('/auth/me'),
+  /** 修改密码：成功后旧会话失效，需重新登录 */
+  changePassword: (data: { oldPassword: string; newPassword: string }) =>
+    post<void>('/auth/change-password', data),
 };
 
 export const goalApi = {

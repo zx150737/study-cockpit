@@ -7,7 +7,7 @@
           <span>备考目标</span>
           <el-button size="small" type="primary" @click="openGoalDialog()">新增目标</el-button>
         </div>
-        <el-table :data="goals" size="small" highlight-current-row @current-change="onSelectGoal" empty-text="暂无目标">
+        <el-table :data="goals" size="small" highlight-current-row empty-text="暂无目标" @current-change="onSelectGoal">
           <el-table-column prop="name" label="目标名称" min-width="130" show-overflow-tooltip />
           <el-table-column label="累计完成率" width="150">
             <template #default="{ row }">

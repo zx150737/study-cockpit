@@ -2,7 +2,8 @@
   <div>
     <!-- 筛选栏 -->
     <div class="panel filter-bar">
-      <el-date-picker v-model="query.taskDate" type="date" value-format="YYYY-MM-DD"
+      <el-date-picker
+v-model="query.taskDate" type="date" value-format="YYYY-MM-DD"
                       placeholder="任务日期" style="width:150px" clearable @change="reload" />
       <el-select v-model="query.goalId" placeholder="全部目标" clearable style="width:160px" @change="reload">
         <el-option v-for="g in goals" :key="g.id" :label="g.name" :value="g.id" />
@@ -18,7 +19,8 @@
 
     <!-- 任务表格 -->
     <div class="panel" style="margin-top:12px">
-      <el-table v-loading="loading" :data="rows" size="small" empty-text="暂无任务"
+      <el-table
+v-loading="loading" :data="rows" size="small" empty-text="暂无任务"
                 :row-class-name="rowClass">
         <el-table-column prop="taskDate" label="日期" width="105" />
         <el-table-column prop="title" label="任务内容" min-width="180" show-overflow-tooltip />
@@ -50,8 +52,9 @@
           </template>
         </el-table-column>
       </el-table>
-      <el-pagination class="pager" background layout="total, prev, pager, next, sizes"
-                     :total="total" v-model:current-page="page" v-model:page-size="size"
+      <el-pagination
+v-model:current-page="page" v-model:page-size="size" class="pager"
+                     background layout="total, prev, pager, next, sizes" :total="total"
                      :page-sizes="[20, 50, 100]" @current-change="load" @size-change="reload" />
     </div>
 
@@ -77,7 +80,8 @@
           <el-date-picker v-model="form.taskDate" type="date" value-format="YYYY-MM-DD" style="width:100%" />
         </el-form-item>
         <el-form-item label="截止时间">
-          <el-date-picker v-model="form.deadline" type="datetime" value-format="YYYY-MM-DD HH:mm:ss"
+          <el-date-picker
+v-model="form.deadline" type="datetime" value-format="YYYY-MM-DD HH:mm:ss"
                           style="width:100%" clearable />
         </el-form-item>
         <el-form-item label="掌握度">

@@ -2,7 +2,8 @@
   <div>
     <div class="panel filter-bar">
       <span class="text-muted">周次</span>
-      <el-date-picker :model-value="weekStart" type="date" value-format="YYYY-MM-DD"
+      <el-date-picker
+:model-value="weekStart" type="date" value-format="YYYY-MM-DD"
                       style="width:160px" @update:model-value="onWeekPick" />
       <span class="text-muted">{{ weekStart }} ~ {{ sundayOf(weekStart) }}</span>
       <el-select v-model="goalId" placeholder="全部目标" clearable style="width:170px" @change="load">
