@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && mkdir -p /app /data/study-cockpit/uploads \
     && chown -R cockpit:cockpit /app /data/study-cockpit
 WORKDIR /app
-COPY --from=backend-build --chown=cockpit:cockpit /build/backend/target/study-cockpit-1.0.0.jar app.jar
+COPY --from=backend-build --chown=cockpit:cockpit /build/backend/target/study-cockpit-1.1.0.jar app.jar
 USER cockpit
 EXPOSE 8080
 ENTRYPOINT ["java", "-Duser.timezone=Asia/Shanghai", "-Dfile.encoding=UTF-8", "-Xms128m", "-Xmx512m", "-jar", "/app/app.jar"]

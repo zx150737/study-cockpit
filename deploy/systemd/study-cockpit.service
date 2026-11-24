@@ -20,7 +20,7 @@ ExecStart=/usr/bin/java \
   -Duser.timezone=Asia/Shanghai \
   -Dfile.encoding=UTF-8 \
   -Xms256m -Xmx512m \
-  -jar /opt/study-cockpit/backend/target/study-cockpit-1.0.0.jar
+  -jar /opt/study-cockpit/backend/target/study-cockpit-1.1.0.jar
 
 Restart=on-failure
 RestartSec=10
