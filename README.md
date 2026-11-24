@@ -10,7 +10,7 @@
 - 图片记录：上传学习图片，登录鉴权访问，15 天到期清理。
 - 驾驶舱：当日完成率、本周趋势、连续打卡、目标进度及积压任务。
 - 周度分析：科目统计、周报 CSV 导出、历史周结算与归档。
-- 用户账号：账号密码登录，业务数据按用户隔离。
+- 用户账号：自助注册、账号密码登录与修改密码，业务数据按用户隔离；注册入口由服务器开关控制。
 
 ## 技术栈
 
@@ -29,6 +29,8 @@ backend/     Java 后端源码与 Maven 配置
 frontend/    Vue 网页源码与 pnpm 锁文件
 docs/        架构设计、部署说明、SQL 建表脚本
 deploy/      环境变量模板、Nginx/systemd 配置和初始化脚本
+compose.yaml 三服务部署配置（HTTPS 网页、Java 后端、MySQL）
+Dockerfile   从源码构建前后端部署镜像
 ```
 
 本仓库仅包含网页版本。没有内置账号、用户数据、数据库备份、真实密钥或微信小程序代码。
@@ -53,7 +55,7 @@ deploy/      环境变量模板、Nginx/systemd 配置和初始化脚本
 | `DB_PASSWORD` | 对应数据库密码 |
 | `DB_URL` | 可选；默认连接本机 3306 端口的 study_cockpit |
 | `FILE_STORAGE_DIR` | 上传目录的绝对路径；Windows 必须设为实际盘符路径 |
-| `APP_ALLOW_REGISTER` | 首次建号时临时设为 true，建号后改回 false 并重启 |
+| `APP_ALLOW_REGISTER` | true 开放自助注册；false 关闭注册但允许已有账号登录 |
 
 PowerShell 示例（替换占位内容）：
 
@@ -71,9 +73,8 @@ mvn spring-boot:run
 
 ### 3. 创建自己的登录账号
 
-项目不提供通用默认用户名或密码。可按部署文档的“初始化登录账号”章节，先获取 CSRF Cookie，再携带 Cookie 和同值的 `X-XSRF-TOKEN` 请求头调用 `/api/auth/register`。
-也可使用 `deploy/scripts/init-user.sh` 生成 BCrypt 密文及待执行 SQL。
-账号建立后关闭 `APP_ALLOW_REGISTER` 并重启后端。
+项目不提供通用默认用户名或密码。`APP_ALLOW_REGISTER=true` 时，打开网页点击“创建账号”，填写用户名、密码和可选昵称即可注册。每个账号独立保存学习数据。
+若只供指定人员使用，可建号后关闭注册开关并重启；已有账号可继续登录。也可使用 `deploy/scripts/init-user.sh` 生成 BCrypt 密文及待执行 SQL。
 
 ### 4. 启动网页
 
@@ -107,12 +108,25 @@ mvn clean verify
 
 - 首次部署按部署文档创建账号；登录后可在页面右上角「修改密码」更新口令。
 - 修改密码需校验当前密码；密码和会话版本在同一条数据库更新中写入，成功后该账号的旧登录态全部失效，需重新登录。
-- 生产环境保持 `APP_ALLOW_REGISTER=false`，避免注册入口被外部使用。
+- 需要用户自助注册时设 `APP_ALLOW_REGISTER=true`；关闭后网页隐藏入口，接口也拒绝注册。
+
+## 让其他人通过网址使用
+
+推荐使用 [多人使用与服务器部署](docs/03-多人使用与服务器部署.md) 中的 Docker Compose 方案。它将 HTTPS 网页、Java 后端、MySQL 一起部署，数据库与图片使用持久卷，并提供随机密钥初始化与备份脚本。
+
+部署到已准备好域名和 Docker 的全新 Linux 服务器：
+
+```sh
+bash deploy/docker/setup.sh study.example.com
+docker compose up -d --build --wait
+```
+
+将示例域名替换为自己的域名，并提前解析到服务器。服务器费用、注册规则、数据备份与上线验收见部署文档；源码包本身不会创建公网服务器。
 
 ## 服务器部署
 
 详细步骤见 [部署文档](docs/02-部署文档.md)。示例模板需要替换为自己的域名、目录和数据库连接信息。
-生产部署使用 prod profile、HTTPS、独立随机密钥及最小权限数据库账号，关闭首次初始化用的注册入口。
+生产部署使用 prod profile、HTTPS、独立随机密钥及最小权限数据库账号，按是否开放自助注册配置注册开关。
 
 GitHub 仓库用于分享源码；将代码开源不会自动把 Java 后端、数据库或网页部署到公网。
 

@@ -62,7 +62,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/auth/csrf").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/auth/csrf", "/api/auth/registration").permitAll()
                     // 其余所有接口（含图片字节流）一律要求已认证
                     .anyRequest().authenticated())
             .exceptionHandling(ex -> ex

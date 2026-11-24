@@ -1,0 +1,16 @@
+**/.git
+**/.local
+**/node_modules
+**/target
+**/dist
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
+**/*.zip
+**/*.jar
+**/*.key
+**/*.pem
+**/uploads
+**/backups
+**/mysql-data

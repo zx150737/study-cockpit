@@ -3,7 +3,7 @@ name: Build & Check
 # 推送 main 分支与发起 PR 时并行校验后端、前端，保证主干始终可构建。
 on:
   push:
-    branches: [main]
+    branches: [main, codex/public-registration-deployment]
   pull_request:
     branches: [main]
 
@@ -56,3 +56,42 @@ jobs:
         run: pnpm lint
       - name: Build
         run: pnpm build
+
+  deployment:
+    name: Deployment (Docker Compose / HTTPS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Generate disposable configuration
+        shell: bash
+        run: |
+          umask 077
+          {
+            echo 'APP_DOMAIN=localhost'
+            echo 'HTTP_PORT=8088'
+            echo 'HTTPS_PORT=8443'
+            echo 'APP_ALLOW_REGISTER=true'
+            for key in DB_PASSWORD MYSQL_ROOT_PASSWORD JWT_SECRET FILE_TOKEN_SECRET; do
+              echo "$key=$(openssl rand -hex 32)"
+            done
+          } > .env
+          docker compose config --quiet
+          bash -n deploy/docker/setup.sh deploy/docker/backup.sh
+      - name: Build and start production containers
+        run: docker compose up -d --build --wait --wait-timeout 240
+      - name: Verify HTTPS and independent accounts
+        run: |
+          for attempt in $(seq 1 30); do
+            if docker compose cp web:/data/caddy/pki/authorities/local/root.crt /tmp/cockpit-ca.crt; then break; fi
+            sleep 2
+          done
+          SMOKE_CA_FILE=/tmp/cockpit-ca.crt python3 deploy/docker/smoke-test.py
+          bash deploy/docker/backup.sh
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose logs --tail=120
+      - name: Stop disposable services
+        if: always()
+        run: docker compose down

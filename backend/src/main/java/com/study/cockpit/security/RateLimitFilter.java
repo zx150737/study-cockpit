@@ -34,8 +34,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
         String uri = normalize(request.getRequestURI());
-        boolean isLogin = "/api/auth/login".equals(uri);
-        long limit = isLogin ? props.getLoginRateLimitPerMinute() : props.getRateLimitPerMinute();
+        boolean isCredentialRequest = "/api/auth/login".equals(uri) || "/api/auth/register".equals(uri);
+        long limit = isCredentialRequest ? props.getLoginRateLimitPerMinute() : props.getRateLimitPerMinute();
         String key = clientIp(request) + "|" + uri;
 
         if (!cache.tryAcquire(key, limit)) {

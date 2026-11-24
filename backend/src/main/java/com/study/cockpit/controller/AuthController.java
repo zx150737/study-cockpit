@@ -2,6 +2,7 @@ package com.study.cockpit.controller;
 
 import com.study.cockpit.common.Result;
 import com.study.cockpit.dto.AuthDTO;
+import com.study.cockpit.config.AppProperties;
 import com.study.cockpit.security.SecurityUtils;
 import com.study.cockpit.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,13 +11,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-/** 认证接口：登录 / 初始化注册 / 注销 / 当前用户 / CSRF 令牌预取 */
+/** 认证接口：登录 / 注册 / 注销 / 当前用户 / CSRF 令牌预取 */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
+    private final AppProperties props;
 
     /**
      * 登录页加载时调用一次，触发 CookieCsrfTokenRepository 下发 XSRF-TOKEN。
@@ -33,7 +35,12 @@ public class AuthController {
         return Result.ok(authService.login(req, response));
     }
 
-    /** 仅首次初始化账号使用，生产由 APP_ALLOW_REGISTER=false 关闭 */
+    @GetMapping("/registration")
+    public Result<AuthDTO.RegistrationConfig> registration() {
+        return Result.ok(new AuthDTO.RegistrationConfig(props.isAllowRegister()));
+    }
+
+    /** 公开注册由 APP_ALLOW_REGISTER 控制，关闭时接口同样拒绝注册。 */
     @PostMapping("/register")
     public Result<AuthDTO.UserVO> register(@Valid @RequestBody AuthDTO.RegisterReq req) {
         return Result.ok(authService.register(req));

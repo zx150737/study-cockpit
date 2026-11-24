@@ -18,7 +18,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DuplicateKeyException;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -44,11 +46,12 @@ public class AuthService {
     private final SecurityCacheService securityCache;
     private final AppProperties props;
 
-    /** 注册仅用于首次初始化；生产通过 APP_ALLOW_REGISTER=false 关闭 */
+    /** 自助注册由部署开关控制；账号数据独立，用户名由唯一索引保证。 */
     public AuthDTO.UserVO register(AuthDTO.RegisterReq req) {
         if (!props.isAllowRegister()) {
             throw new BusinessException(ResultCode.FORBIDDEN, "注册接口已关闭");
         }
+        validatePasswordBytes(req.getPassword());
         if (sysUserMapper.selectByUsername(req.getUsername()) != null) {
             throw BusinessException.param("用户名已存在");
         }
@@ -58,7 +61,12 @@ public class AuthService {
         user.setNickname(req.getNickname());
         user.setStatus(1);
         user.setTokenVersion(0);
-        sysUserMapper.insert(user);
+        try {
+            sysUserMapper.insert(user);
+        } catch (DuplicateKeyException e) {
+            // 同名并发注册可能同时通过预检查，由数据库唯一索引兜底。
+            throw BusinessException.param("用户名已存在");
+        }
         return toVO(user);
     }
 
@@ -113,6 +121,7 @@ public class AuthService {
      * 3. token_version +1，使该用户所有旧 JWT 立即失效，强制重新登录。
      */
     public void changePassword(Long userId, AuthDTO.ChangePasswordReq req) {
+        validatePasswordBytes(req.getNewPassword());
         SysUser user = sysUserMapper.selectById(userId);
         if (user == null || user.getStatus() == null || user.getStatus() != 1) {
             throw new BusinessException(ResultCode.UNAUTHORIZED);
@@ -129,6 +138,12 @@ public class AuthService {
             throw new BusinessException(ResultCode.UNAUTHORIZED, "账号状态已变化，请重新登录");
         }
         log.info("密码已修改 userId={}，旧会话已失效", userId);
+    }
+
+    private void validatePasswordBytes(String password) {
+        if (password.getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw BusinessException.param("密码过长：最多 72 个英文字符，中文等字符会占用更多长度");
+        }
     }
 
     private ResponseCookie buildCookie(String value, long maxAgeSeconds) {

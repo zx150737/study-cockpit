@@ -1,0 +1,35 @@
+{$APP_DOMAIN} {
+    encode zstd gzip
+
+    header {
+        -Server
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy no-referrer
+        Strict-Transport-Security "max-age=31536000"
+    }
+
+    handle /api/* {
+        request_body {
+            max_size 6MB
+        }
+        reverse_proxy backend:8080 {
+            # 单层公网入口覆盖来访者自行提供的转发头，供后端按真实 IP 限流。
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    @private path /.git/* /.env /uploads/*
+    respond @private 404
+
+    handle {
+        root * /srv
+        @assets path /assets/*
+        header @assets Cache-Control "public, max-age=31536000, immutable"
+        try_files {path} /index.html
+        @index path /index.html
+        header @index Cache-Control "no-store"
+        file_server
+    }
+}

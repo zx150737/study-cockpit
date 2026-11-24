@@ -1,6 +1,7 @@
 package com.study.cockpit.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -23,6 +24,7 @@ public class AuthDTO {
     public static class RegisterReq {
         @NotBlank(message = "用户名不能为空")
         @Size(min = 3, max = 64, message = "用户名长度需在 3~64 之间")
+        @Pattern(regexp = "[A-Za-z0-9_.-]+", message = "用户名仅支持英文字母、数字、下划线、点和短横线")
         private String username;
 
         @NotBlank(message = "密码不能为空")
@@ -39,6 +41,9 @@ public class AuthDTO {
         private String username;
         private String nickname;
     }
+
+    /** 仅公开注册开关，不返回服务端密钥或其他部署配置。 */
+    public record RegistrationConfig(boolean enabled) {}
 
     /** 修改密码请求：校验旧密码，BCrypt 存新密文，改密后旧 JWT 全部失效 */
     @Data

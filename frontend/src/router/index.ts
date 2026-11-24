@@ -2,8 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 
 /**
- * 页面路由（6 个页面）。
- * 除 /login 外全部需要认证；守卫通过 /api/auth/me 判定 HttpOnly Cookie 是否有效。
+ * 登录与注册为公开页面，其余页面需要认证。
+ * 守卫通过 /api/auth/me 判定 HttpOnly Cookie 是否有效。
  */
 const router = createRouter({
   history: createWebHistory(),
@@ -13,6 +13,12 @@ const router = createRouter({
       name: 'Login',
       component: () => import('@/views/login/LoginView.vue'),
       meta: { public: true, title: '登录' },
+    },
+    {
+      path: '/register',
+      name: 'Register',
+      component: () => import('@/views/login/RegisterView.vue'),
+      meta: { public: true, title: '注册' },
     },
     {
       path: '/',

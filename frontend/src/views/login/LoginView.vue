@@ -2,7 +2,7 @@
   <div class="login-page">
     <div class="login-box panel">
       <div class="login-title">学习监控驾驶舱</div>
-      <div class="login-sub">安全认证 · 全链路 UTC+8</div>
+      <div class="login-sub">登录后管理你的学习计划与复盘</div>
       <el-form :model="form" @keyup.enter="submit">
         <el-form-item>
           <el-input v-model="form.username" placeholder="用户名" :prefix-icon="User" size="large" autocomplete="username" />
@@ -16,7 +16,10 @@ v-model="form.password" type="password" show-password placeholder="密码"
           登录
         </el-button>
       </el-form>
-      <div class="login-foot">个人独立部署 · 数据仅本人可见</div>
+      <div v-if="registrationEnabled" class="login-foot">
+        还没有账号？<router-link to="/register">创建账号</router-link>
+      </div>
+      <div class="login-foot">每个账号独立保存学习数据</div>
     </div>
   </div>
 </template>
@@ -33,12 +36,14 @@ const route = useRoute();
 const router = useRouter();
 const store = useUserStore();
 const loading = ref(false);
+const registrationEnabled = ref(false);
 const form = reactive({ username: '', password: '' });
 
 // 先取 CSRF Cookie，Axios 会在随后的 POST 自动带上 X-XSRF-TOKEN
 onMounted(async () => {
   try {
     await authApi.csrf();
+    registrationEnabled.value = (await authApi.registration()).enabled;
   } catch {
     // 网络异常时登录会再次给出明确提示
   }

@@ -7,6 +7,7 @@ import type {
 export const authApi = {
   /** 登录前调用一次，让后端下发 XSRF-TOKEN Cookie */
   csrf: () => get<void>('/auth/csrf'),
+  registration: () => get<{ enabled: boolean }>('/auth/registration'),
   login: (data: { username: string; password: string }) => post<UserVO>('/auth/login', data),
   register: (data: { username: string; password: string; nickname?: string }) =>
     post<UserVO>('/auth/register', data),
