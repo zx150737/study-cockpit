@@ -1,0 +1,38 @@
+# ============================================================
+# 生产 profile：严格模式
+# 1) 关闭一切调试输出与堆栈返回
+# 2) 不打印 SQL
+# 3) Cookie 强制 Secure（依赖 HTTPS）
+# 4) 密钥/DB 密码必须由 systemd EnvironmentFile 注入，缺失即启动失败
+# ============================================================
+server:
+  address: ${SERVER_ADDRESS:127.0.0.1}
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+    whitelabel:
+      enabled: false
+
+spring:
+  devtools:
+    restart:
+      enabled: false
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+cockpit:
+  jwt:
+    cookie-secure: true
+
+logging:
+  level:
+    root: WARN
+    com.study.cockpit: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [trace=%X{traceId:-}] %logger{36} - %msg%n"

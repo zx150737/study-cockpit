@@ -1,0 +1,100 @@
+/* ============================================================
+   深色工业风主题：无多余花哨动画，仅状态色变化
+   覆写 Element Plus dark css-vars，统一面板/边框/强调色
+   ============================================================ */
+:root {
+  --bg-base: #0d1117;
+  --bg-panel: #161b22;
+  --bg-panel-2: #1c2430;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --text-muted: #8b949e;
+  --accent: #39c5cf;
+  --accent-dim: #1f6f75;
+  --warn: #f4544c;
+  --ok: #3fb950;
+  --orange: #e3a008;
+
+  --el-color-primary: #39c5cf;
+  --el-color-success: #3fb950;
+  --el-color-warning: #e3a008;
+  --el-color-danger: #f4544c;
+  --el-bg-color: #161b22;
+  --el-bg-color-overlay: #1c2430;
+  --el-border-color: #30363d;
+  --el-border-color-light: #30363d;
+  --el-text-color-primary: #c9d1d9;
+  --el-text-color-regular: #8b949e;
+  --el-fill-color-blank: #161b22;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app { height: 100%; margin: 0; }
+
+body {
+  background: var(--bg-base);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 关闭花哨过渡，保留必要的状态反馈 */
+* { transition-duration: 0.12s !important; animation-duration: 0.12s !important; }
+
+a { color: var(--accent); text-decoration: none; }
+
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 12px;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.metric-label { font-size: 12px; color: var(--text-muted); }
+
+.text-warn { color: var(--warn) !important; }
+.text-ok { color: var(--ok) !important; }
+.text-muted { color: var(--text-muted); }
+
+/* 未完成任务标红 */
+.row-overdue { background: rgba(244, 84, 76, 0.08) !important; }
+.row-overdue td { color: var(--warn) !important; }
+
+.grid { display: grid; gap: 12px; }
+.grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* 响应式：平板 2 列，移动端单列 + 侧栏转抽屉 */
+@media (max-width: 1199px) {
+  .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  .grid-4, .grid-2 { grid-template-columns: 1fr; }
+  .panel { padding: 12px; }
+  .metric-value { font-size: 22px; }
+  .el-dialog { width: 92% !important; }
+}
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }

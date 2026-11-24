@@ -1,0 +1,107 @@
+# ============================================================
+# 通用配置：所有敏感项均通过环境变量注入，禁止硬编码
+# 生产敏感项无默认值 -> 缺失即启动失败（AppProperties#validate fail-fast）
+# 时区：全链路 UTC+8 (Asia/Shanghai)
+# ============================================================
+spring:
+  application:
+    name: study-cockpit
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: non_null
+  servlet:
+    multipart:
+      # 上传大小双重校验之一（Nginx client_max_body_size 为另一道）
+      max-file-size: ${FILE_MAX_SIZE:5MB}
+      max-request-size: ${FILE_MAX_SIZE:5MB}
+      resolve-lazily: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/study_cockpit?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&connectionTimeZone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=false&rewriteBatchedStatements=true}
+    username: ${DB_USERNAME:}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 10000
+      idle-timeout: 300000
+      max-lifetime: 900000
+      leak-detection-threshold: 60000
+  sql:
+    init:
+      mode: never
+
+server:
+  # 仅监听内网，由 Nginx 反向代理对外
+  address: ${SERVER_ADDRESS:127.0.0.1}
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+    whitelabel:
+      enabled: false
+  forward-headers-strategy: native
+
+# 安全要求 6：彻底关闭监控/调试端点，不暴露任何环境信息
+management:
+  endpoints:
+    enabled-by-default: false
+    web:
+      exposure:
+        include: ""
+  endpoint:
+    health:
+      enabled: false
+    info:
+      enabled: false
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    # 生产默认不打印 SQL（防止参数与数据进入日志）
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+      insert-strategy: not_null
+      update-strategy: not_null
+  mapper-locations: classpath*:/mapper/**/*.xml
+
+# 业务配置：全部映射自环境变量
+cockpit:
+  jwt:
+    secret: ${JWT_SECRET:}
+    ttl-minutes: ${JWT_TTL_MINUTES:30}
+    cookie-secure: ${JWT_COOKIE_SECURE:true}
+    cookie-name: ACCESS_TOKEN
+  file:
+    token-secret: ${FILE_TOKEN_SECRET:}
+    token-ttl-seconds: ${FILE_TOKEN_TTL:1800}
+    storage-dir: ${FILE_STORAGE_DIR:/data/study-cockpit/uploads}
+    max-size-bytes: ${FILE_MAX_SIZE_BYTES:5242880}
+    allowed-ext: jpg,jpeg,png,webp
+  security:
+    allow-register: ${APP_ALLOW_REGISTER:false}
+    rate-limit-per-minute: ${RATE_LIMIT_PER_MINUTE:60}
+    login-rate-limit-per-minute: ${LOGIN_RATE_LIMIT_PER_MINUTE:5}
+    login-max-fail: ${LOGIN_MAX_FAIL:5}
+    login-lock-minutes: ${LOGIN_LOCK_MINUTES:15}
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [trace=%X{traceId:-}] %logger{36} - %msg%n"
+  level:
+    root: INFO
+    com.study.cockpit: INFO
+    org.springframework.security: INFO

@@ -1,0 +1,28 @@
+# ============================================================
+# 本地开发 profile：仅便于本机运行，绝不用于生产
+# 密钥仍从环境变量读取；未设置时由 AppProperties 生成"每次启动变化的临时密钥"，
+# 保证仓库中不存在任何硬编码密钥（生产 profile 缺失密钥则直接启动失败）。
+# ============================================================
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 5
+
+server:
+  error:
+    include-message: always
+    include-stacktrace: never
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+cockpit:
+  jwt:
+    cookie-secure: false   # 本地 http:// 下 Cookie 不带 Secure 属性
+  file:
+    storage-dir: ${FILE_STORAGE_DIR:/tmp/study-cockpit-dev/uploads}
+
+logging:
+  level:
+    com.study.cockpit: DEBUG

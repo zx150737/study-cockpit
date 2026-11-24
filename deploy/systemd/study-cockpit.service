@@ -1,0 +1,47 @@
+# ============================================================
+# systemd 单元：/etc/systemd/system/study-cockpit.service
+# 运行用户非 root；密钥通过 EnvironmentFile 注入，文件权限 600
+# ============================================================
+[Unit]
+Description=Study Cockpit Backend (Spring Boot 3)
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=cockpit
+Group=cockpit
+WorkingDirectory=/opt/study-cockpit
+EnvironmentFile=/etc/study-cockpit/env
+
+# JVM 显式固定 UTC+8，配合 MySQL default-time-zone='+08:00'
+Environment="TZ=Asia/Shanghai"
+ExecStart=/usr/bin/java \
+  -Duser.timezone=Asia/Shanghai \
+  -Dfile.encoding=UTF-8 \
+  -Xms256m -Xmx512m \
+  -jar /opt/study-cockpit/backend/target/study-cockpit-1.0.0.jar
+
+Restart=on-failure
+RestartSec=10
+SuccessExitStatus=143
+# 优雅关闭（server.shutdown=graceful）
+TimeoutStopSec=40
+KillSignal=SIGTERM
+
+# ---- 进程加固 ----
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/data/study-cockpit/uploads /var/log/study-cockpit
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+StandardOutput=append:/var/log/study-cockpit/app.log
+StandardError=append:/var/log/study-cockpit/app.err.log
+
+[Install]
+WantedBy=multi-user.target
