@@ -28,7 +28,7 @@ public class AuthDTO {
         private String username;
 
         @NotBlank(message = "密码不能为空")
-        @Size(min = 8, max = 128, message = "密码长度需在 8~128 之间")
+        @Size(min = 8, max = 72, message = "密码长度需在 8~72 之间")
         private String password;
 
         @Size(max = 64, message = "昵称过长")
@@ -53,7 +53,7 @@ public class AuthDTO {
         private String oldPassword;
 
         @NotBlank(message = "新密码不能为空")
-        @Size(min = 8, max = 128, message = "新密码长度需在 8~128 之间")
+        @Size(min = 8, max = 72, message = "新密码长度需在 8~72 之间")
         private String newPassword;
     }
 }

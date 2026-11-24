@@ -14,10 +14,10 @@
           <el-input v-model="form.nickname" placeholder="你希望显示的名字" autocomplete="nickname" maxlength="64" />
         </el-form-item>
         <el-form-item label="密码" prop="password">
-          <el-input v-model="form.password" type="password" show-password placeholder="至少 8 位" autocomplete="new-password" maxlength="128" />
+          <el-input v-model="form.password" type="password" show-password placeholder="至少 8 位" autocomplete="new-password" maxlength="72" />
         </el-form-item>
         <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input v-model="form.confirmPassword" type="password" show-password placeholder="再次输入密码" autocomplete="new-password" maxlength="128" />
+          <el-input v-model="form.confirmPassword" type="password" show-password placeholder="再次输入密码" autocomplete="new-password" maxlength="72" />
         </el-form-item>
         <el-button class="submit-btn" type="primary" native-type="submit" :loading="submitting">创建账号</el-button>
       </el-form>
