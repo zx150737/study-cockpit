@@ -1,5 +1,8 @@
 # 学习监控驾驶舱 · Study Cockpit
 
+[![release](https://img.shields.io/github/v/release/zx150737/study-cockpit?style=flat-square)](https://github.com/zx150737/study-cockpit/releases/latest)
+[![license](https://img.shields.io/github/license/zx150737/study-cockpit?style=flat-square)](./LICENSE)
+
 基于 Vue 3、Spring Boot 和 MySQL 的学习计划与复盘网页应用。
 管理目标和科目、安排每日任务、记录完成情况，通过驾驶舱与周报查看学习进度。
 
