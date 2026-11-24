@@ -89,6 +89,10 @@ jobs:
           done
           SMOKE_CA_FILE=/tmp/cockpit-ca.crt SMOKE_RECREATE=true python3 deploy/docker/smoke-test.py
           bash deploy/docker/backup.sh
+          if docker compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -u cockpit study_cockpit -e "CREATE TABLE forbidden_ddl (id INT);"'; then
+            echo 'Business account unexpectedly has DDL permission'
+            exit 1
+          fi
           docker compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -u root -e "CREATE DATABASE cockpit_restore;"'
           gzip -dc backups/study_cockpit_*.sql.gz | docker compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -u root cockpit_restore'
           docker compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -u root -N -e "SELECT (SELECT COUNT(*) FROM study_cockpit.sys_user)=(SELECT COUNT(*) FROM cockpit_restore.sys_user) AND (SELECT COUNT(*) FROM study_cockpit.daily_task)=(SELECT COUNT(*) FROM cockpit_restore.daily_task);"' | grep -qx 1
