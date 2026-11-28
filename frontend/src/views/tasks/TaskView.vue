@@ -41,8 +41,9 @@ v-loading="loading" :data="rows" size="small" empty-text="暂无任务"
         <el-table-column label="图片" width="70">
           <template #default="{ row }">{{ row.imageCount || 0 }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
+            <el-button link size="small" @click="openTimer(row)">计时</el-button>
             <el-button link size="small" @click="toggleFinish(row)">
               {{ row.finishStatus === 1 ? '撤销' : '完成' }}
             </el-button>
@@ -100,6 +101,35 @@ v-model="form.deadline" type="datetime" value-format="YYYY-MM-DD HH:mm:ss"
     <el-dialog v-model="imageDialog" title="配套图片" width="520px">
       <ImageUploader v-if="imageTaskId" :task-id="imageTaskId" />
     </el-dialog>
+
+    <!-- 限时训练 -->
+    <el-dialog v-model="timerDialog" title="限时训练" width="min(430px, 92vw)">
+      <div v-if="timerTask" class="timer-task">
+        <div class="t-label">本次任务</div>
+        <div class="timer-task-title">{{ timerTask.title }}</div>
+      </div>
+      <div class="preset-row">
+        <el-button
+          v-for="m in TIMER_PRESETS"
+          :key="m"
+          size="small"
+          :type="timerMinutes === m ? 'primary' : 'default'"
+          @click="timerMinutes = m"
+        >{{ m }} 分</el-button>
+      </div>
+      <div class="custom-row">
+        <span class="t-label">自定义</span>
+        <el-input-number v-model="timerMinutes" :min="1" :max="180" size="small" />
+        <span class="t-dim">分钟</span>
+      </div>
+      <p class="timer-hint t-dim">
+        开始后计时器常驻右下角，切换页面或刷新都不会中断；时间到会弹窗 + 提示音 + 系统通知。
+      </p>
+      <template #footer>
+        <el-button @click="timerDialog = false">取消</el-button>
+        <el-button type="primary" @click="startTimer">开始计时</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -109,6 +139,8 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { taskApi, goalApi, subjectApi } from '@/api';
 import { today } from '@/utils/date';
 import ImageUploader from '@/components/ImageUploader.vue';
+import { useUserStore } from '@/stores/user';
+import { useTimerStore } from '@/stores/timer';
 import type { GoalVO, SubjectVO, TaskVO } from '@/types';
 
 const loading = ref(false);
@@ -123,6 +155,14 @@ const dialog = ref(false);
 const editing = ref<TaskVO | null>(null);
 const imageDialog = ref(false);
 const imageTaskId = ref<number | null>(null);
+
+// ---- 限时训练 ----
+const timerStore = useTimerStore();
+const userStore = useUserStore();
+const timerDialog = ref(false);
+const timerTask = ref<TaskVO | null>(null);
+const timerMinutes = ref(25);
+const TIMER_PRESETS = [5, 10, 15, 25, 45, 60];
 
 const query = reactive({
   taskDate: today(),
@@ -250,6 +290,35 @@ function openImages(row: TaskVO): void {
   imageDialog.value = true;
 }
 
+function openTimer(row: TaskVO): void {
+  timerTask.value = row;
+  timerMinutes.value = 25;
+  timerDialog.value = true;
+}
+
+async function startTimer(): Promise<void> {
+  const row = timerTask.value;
+  if (!row) return;
+  timerStore.init(String(userStore.user?.id ?? ''));
+  if (timerStore.isActive) {
+    try {
+      await ElMessageBox.confirm('当前已有进行中的计时，开始新的会替换它。继续？', '提示', { type: 'warning' });
+    } catch {
+      return;
+    }
+  }
+  timerStore.start({ taskId: row.id, taskTitle: row.title, minutes: timerMinutes.value });
+  timerDialog.value = false;
+  ElMessage.success(`已开始 ${timerMinutes.value} 分钟限时训练`);
+  try {
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+  } catch {
+    // 通知权限被拒不影响计时
+  }
+}
+
 onMounted(async () => {
   await loadBase();
   await load();
@@ -260,4 +329,9 @@ onMounted(async () => {
 .filter-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .spacer { flex: 1; }
 .pager { margin-top: 14px; justify-content: flex-end; }
+.timer-task { margin-bottom: 14px; }
+.timer-task-title { font-size: var(--fs-h2); font-weight: 500; color: var(--t1); margin-top: 6px; }
+.preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.custom-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.timer-hint { font-size: var(--fs-label); line-height: 1.7; margin: 0; }
 </style>

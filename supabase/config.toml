@@ -1,0 +1,41 @@
+project_id = "study-cockpit-free"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:5174"
+additional_redirect_urls = ["http://127.0.0.1:5174/login"]
+jwt_expiry = 3600
+enable_signup = true
+minimum_password_length = 8
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
+[functions.task-images]
+# The function validates the bearer token using auth.getUser().
+verify_jwt = false
+
+[functions.cleanup-images]
+# Only the private CLEANUP_SECRET is accepted, never a publishable key.
+verify_jwt = false
+
+[functions.image-archive]
+# Admin-only; the function verifies the caller against public.sc_admins.
+verify_jwt = false
+
+[functions.ai-tutor]
+# Server-side model call; the function validates the bearer token itself.
+# Secrets: DEEPSEEK_API_KEY (required), DEEPSEEK_MODEL (optional, default deepseek-chat).
+verify_jwt = false

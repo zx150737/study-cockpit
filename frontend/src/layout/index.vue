@@ -1,10 +1,10 @@
 <template>
-  <el-container class="app-shell">
+  <el-container class="app-shell canvas-glow">
     <!-- PC 侧栏 -->
     <el-aside v-if="!isMobile" width="210px" class="side">
       <div class="brand">
-        <span class="brand-mark">▣</span>
-        <span>学习监控驾驶舱</span>
+        <BrandMark :size="20" />
+        <span class="brand-name">学习监控驾驶舱</span>
       </div>
       <el-menu class="side-menu" router :default-active="route.path" :collapse="false">
         <el-menu-item v-for="item in menus" :key="item.path" :index="item.path">
@@ -18,8 +18,8 @@
     <!-- 移动端抽屉 -->
     <el-drawer v-else v-model="drawer" direction="ltr" size="220px" :with-header="false">
       <div class="brand">
-        <span class="brand-mark">▣</span>
-        <span>学习监控驾驶舱</span>
+        <BrandMark :size="20" />
+        <span class="brand-name">学习监控驾驶舱</span>
       </div>
       <el-menu class="side-menu" router :default-active="route.path" @select="drawer = false">
         <el-menu-item v-for="item in menus" :key="item.path" :index="item.path">
@@ -40,11 +40,22 @@
           积压 {{ overdueTotal }}
         </el-tag>
         <span class="user-name">{{ store.user?.nickname || store.user?.username }}</span>
+        <el-button
+          text
+          class="theme-btn"
+          :title="theme.isDark ? '切换到浅色模式' : '切换到深色模式'"
+          @click="theme.toggle()"
+        >
+          <el-icon><Sunny v-if="theme.isDark" /><Moon v-else /></el-icon>
+        </el-button>
         <el-button text @click="pwdDialog = true">修改密码</el-button>
         <el-button text @click="doLogout">退出</el-button>
       </el-header>
       <el-main class="main"><router-view /></el-main>
     </el-container>
+
+    <!-- 专注计时器：跨页面常驻 -->
+    <FocusTimer />
 
     <!-- 修改密码弹窗 -->
     <el-dialog v-model="pwdDialog" title="修改密码" width="min(380px, 92vw)" :close-on-click-modal="!pwdSubmitting" :close-on-press-escape="!pwdSubmitting" :show-close="!pwdSubmitting" @closed="resetPwdForm">
@@ -71,21 +82,33 @@
 import { ref, computed, onMounted, onBeforeUnmount, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
-import { DataAnalysis, Aim, List, TrendCharts, FolderOpened, Menu } from '@element-plus/icons-vue';
+import { DataAnalysis, Aim, List, TrendCharts, FolderOpened, Menu, Setting, MagicStick, Collection, Sunny, Moon } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
-import { authApi, notificationApi } from '@/api';
+import { useThemeStore } from '@/stores/theme';
+import { authApi, notificationApi, adminApi } from '@/api';
+import BrandMark from '@/components/BrandMark.vue';
+import FocusTimer from '@/components/FocusTimer.vue';
+import { weakPasswordReason } from '@/utils/password';
 
 const route = useRoute();
 const router = useRouter();
 const store = useUserStore();
+const theme = useThemeStore();
 
-const menus = [
-  { path: '/dashboard', title: '主驾驶舱', icon: DataAnalysis },
-  { path: '/goals', title: '目标 & 科目', icon: Aim },
-  { path: '/tasks', title: '任务管理', icon: List },
-  { path: '/weekly', title: '周度分析', icon: TrendCharts },
-  { path: '/archive', title: '历史归档', icon: FolderOpened },
-];
+const isAdmin = ref(false);
+
+const menus = computed(() => {
+  const base = [
+    { path: '/dashboard', title: '主驾驶舱', icon: DataAnalysis },
+    { path: '/tutor', title: 'AI 学习助手', icon: MagicStick },
+    { path: '/review', title: '错题复习', icon: Collection },
+    { path: '/goals', title: '目标 & 科目', icon: Aim },
+    { path: '/tasks', title: '任务管理', icon: List },
+    { path: '/weekly', title: '周度分析', icon: TrendCharts },
+    { path: '/archive', title: '历史归档', icon: FolderOpened },
+  ];
+  return isAdmin.value ? [...base, { path: '/admin', title: '后台管理', icon: Setting }] : base;
+});
 
 const width = ref(window.innerWidth);
 const isMobile = computed(() => width.value < 768);
@@ -101,6 +124,11 @@ onMounted(async () => {
     overdueTotal.value = vo.total;
   } catch {
     // 预警拉取失败不阻塞页面
+  }
+  try {
+    isAdmin.value = adminApi ? await adminApi.isAdmin() : false;
+  } catch {
+    isAdmin.value = false;
   }
 });
 
@@ -135,6 +163,13 @@ const pwdRules: FormRules = {
   newPassword: [
     { required: true, message: '请输入新密码', trigger: 'blur' },
     { min: 8, max: 72, message: '新密码长度需在 8~72 之间', trigger: 'blur' },
+    {
+      validator: (_rule: unknown, value: string, callback: (err?: Error) => void) => {
+        const weak = weakPasswordReason(value, store.user?.username);
+        callback(weak ? new Error(weak) : undefined);
+      },
+      trigger: 'blur',
+    },
   ],
   confirmPassword: [
     { required: true, message: '请再次输入新密码', trigger: 'blur' },
@@ -172,14 +207,14 @@ function resetPwdForm() {
 </script>
 
 <style scoped>
-.app-shell { height: 100%; background: var(--bg-base); }
-.side { background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-.brand { height: 56px; display: flex; align-items: center; gap: 8px; padding: 0 16px; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--border); white-space: nowrap; }
-.brand-mark { font-size: 18px; }
-.side-menu { flex: 1; border-right: none; background: transparent; }
-.side-foot { padding: 12px 16px; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); }
-.head { display: flex; align-items: center; gap: 12px; background: var(--bg-panel); border-bottom: 1px solid var(--border); }
-.page-title { font-weight: 600; }
+.app-shell { height: 100%; background: var(--canvas); }
+.side { background: var(--surface); border-right: 1px solid var(--hairline); display: flex; flex-direction: column; }
+.brand { height: 56px; display: flex; align-items: center; gap: 9px; padding: 0 16px; border-bottom: 1px solid var(--hairline); white-space: nowrap; }
+.brand-name { font-weight: 600; color: var(--t1); letter-spacing: 0.01em; }
+.side-menu { flex: 1; border-right: none; background: transparent; padding-top: 8px; }
+.side-foot { padding: 12px 16px; font-size: var(--fs-label); letter-spacing: 0.08em; color: var(--t3); border-top: 1px solid var(--hairline); font-family: var(--font-mono); }
+.head { display: flex; align-items: center; gap: 12px; background: var(--surface); border-bottom: 1px solid var(--hairline); }
+.page-title { font-weight: 500; font-size: var(--fs-h2); letter-spacing: -0.01em; }
 .spacer { flex: 1; }
 .user-name { color: var(--text-muted); font-size: 13px; }
 .main { padding: 16px; overflow: auto; background: var(--bg-base); }

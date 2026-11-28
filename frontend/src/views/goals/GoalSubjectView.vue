@@ -11,7 +11,7 @@
           <el-table-column prop="name" label="目标名称" min-width="130" show-overflow-tooltip />
           <el-table-column label="累计完成率" width="150">
             <template #default="{ row }">
-              <el-progress :percentage="Number(row.completionRate)" :stroke-width="6" color="#39c5cf" />
+              <el-progress :percentage="Number(row.completionRate)" :stroke-width="6" />
             </template>
           </el-table-column>
           <el-table-column prop="subjectCount" label="科目" width="60" />
@@ -35,7 +35,7 @@
           <el-table-column prop="defaultWeight" label="默认权重" width="100" />
           <el-table-column label="本周完成率" width="140">
             <template #default="{ row }">
-              <el-progress :percentage="Number(row.completionRate)" :stroke-width="6" color="#39c5cf" />
+              <el-progress :percentage="Number(row.completionRate)" :stroke-width="6" />
             </template>
           </el-table-column>
           <el-table-column label="操作" width="110">

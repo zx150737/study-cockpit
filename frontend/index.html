@@ -1,10 +1,22 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="dark">
+<html lang="zh-CN" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="referrer" content="no-referrer" />
-    <title>学习监控驾驶舱</title>
+    <meta name="theme-color" content="#FBF7F2" />
+    <meta name="description" content="学习监控驾驶舱 · 用数据记录每天的学习进度" />
+
+    <!-- 首屏防闪烁：必须在样式生效前决定深浅色 -->
+    <script src="/theme-init.js"></script>
+
+    <!-- 品牌图标：SVG 优先，PNG 兜底，iOS 主屏单独一张 -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <title>学习监控驾驶舱 · Study Cockpit</title>
   </head>
   <body>
     <div id="app"></div>

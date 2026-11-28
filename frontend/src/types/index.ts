@@ -16,7 +16,7 @@ export interface PageData<T> {
 }
 
 export interface UserVO {
-  id: number;
+  id: number | string;
   username: string;
   nickname?: string;
 }
@@ -169,4 +169,119 @@ export interface WeekDetailVO {
 export interface OverdueVO {
   total: number;
   items: BacklogItem[];
+}
+
+// ---------------- 后台管理 ----------------
+
+export interface AdminUserVO {
+  userId: string;
+  email: string;
+  nickname: string;
+  createdAt: string | null;
+  lastSignIn: string | null;
+  goalCount: number;
+  taskTotal: number;
+  taskFinished: number;
+  overdueCount: number;
+  completionRate: number;
+  imageCount: number;
+  archivedCount: number;
+  weekCount: number;
+}
+
+export interface AdminImageVO {
+  id: number;
+  taskId: number;
+  originalName: string;
+  path: string;
+  mimeType: string;
+  fileSize: number;
+  uploadTime: string;
+  expireTime: string;
+  archived: boolean;
+  archivedAt: string | null;
+  taskTitle: string | null;
+}
+
+export interface AdminEntryVO {
+  userId: string;
+  email: string;
+  note: string | null;
+  createdAt: string;
+}
+
+// ---------------- AI 学习助手 ----------------
+
+export interface TutorStep {
+  title: string;
+  detail: string;
+}
+
+export interface TutorPractice {
+  stem: string;
+  options: string[];
+  answer: string;
+  explain: string;
+}
+
+export interface TutorReply {
+  title?: string;
+  answer: string;
+  steps: TutorStep[];
+  keyPoints: string[];
+  pitfalls: string[];
+  practice: TutorPractice[];
+}
+
+export interface TutorThreadVO {
+  id: number;
+  title: string;
+  mode: 'explain' | 'practice';
+  subjectId: number | null;
+  subjectName: string | null;
+  question: string;
+  questionPreview?: string;
+  reply: TutorReply | null;
+  hasReply?: boolean;
+  createdAt: string;
+  repliedAt: string | null;
+}
+
+export interface TutorCardVO {
+  id: number;
+  threadId: number | null;
+  front: string;
+  back: string;
+  subjectName: string | null;
+  box: number;
+  dueDate: string;
+  reviewCount: number;
+  correctCount: number;
+  lastReviewedAt: string | null;
+  overdue: boolean;
+}
+
+export interface TutorStatsVO {
+  threadTotal: number;
+  threadsToday: number;
+  cardTotal: number;
+  dueTotal: number;
+  mastered: number;
+  reviewedToday: number;
+  accuracy: number;
+}
+
+export interface TutorThreadPage {
+  list: TutorThreadVO[];
+  total: number;
+  page: number;
+  size: number;
+}
+
+export interface TutorCardPage {
+  list: TutorCardVO[];
+  total: number;
+  dueTotal: number;
+  page: number;
+  size: number;
 }

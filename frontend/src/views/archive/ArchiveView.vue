@@ -6,7 +6,7 @@
         <div class="panel-title">历史周结算记录</div>
         <el-table
 v-loading="loadingWeeks" :data="weeks" size="small" highlight-current-row
-                  empty-text="暂无结算记录（每周日 23:59 生成）" @current-change="onSelectWeek">
+                  :empty-text="isCloud ? '暂无结算记录（每周结束后生成）' : '暂无结算记录（每周日 23:59 生成）'" @current-change="onSelectWeek">
           <el-table-column prop="weekStart" label="周起始" width="115" />
           <el-table-column prop="weekEnd" label="周结束" width="115" />
           <el-table-column label="完成率" width="95">
@@ -88,6 +88,7 @@ import { ref, onMounted } from 'vue';
 import { archiveApi, goalApi } from '@/api';
 import { mondayOf, rateText } from '@/utils/date';
 import type { GoalVO, TaskVO, WeekVO, WeekDetailVO } from '@/types';
+import { isCloud } from '@/cloud/client';
 
 const goals = ref<GoalVO[]>([]);
 

@@ -2,10 +2,12 @@ import { defineStore } from 'pinia';
 import axios from 'axios';
 import { post } from '@/utils/request';
 import type { Result, UserVO } from '@/types';
+import { isCloud, cloudCurrentUser } from '@/cloud/client';
+import { authApi as cloudAuth } from '@/cloud/api';
 
 /**
- * 用户状态：只保存展示信息，绝不保存 JWT（token 在 HttpOnly Cookie 中）。
- * 登录态通过 GET /api/auth/me 判定；路由守卫据此拦截。
+ * Java 版使用 HttpOnly Cookie；免费云版由 Supabase SDK 管理浏览器会话。
+ * 此 store 只保存展示信息，登录身份由服务端验证。
  */
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -16,6 +18,10 @@ export const useUserStore = defineStore('user', {
     /** 用裸 axios 探测登录态，避免触发请求拦截器的自动跳转造成循环导航 */
     async fetchMe(): Promise<void> {
       try {
+        if (isCloud) {
+          this.user = await cloudCurrentUser();
+          return;
+        }
         const base = import.meta.env.VITE_API_BASE_URL || '/api';
         const res = await axios.get<Result<UserVO>>(`${base}/auth/me`, { withCredentials: true });
         this.user = res.data?.code === 0 ? res.data.data : null;
@@ -27,7 +33,8 @@ export const useUserStore = defineStore('user', {
     },
     async logout(): Promise<void> {
       try {
-        await post<void>('/auth/logout');
+        if (isCloud) await cloudAuth.logout();
+        else await post<void>('/auth/logout');
       } catch {
         // 注销失败也清理前端状态
       }

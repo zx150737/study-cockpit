@@ -35,7 +35,7 @@
       <div class="panel" style="margin-top:12px">
         <div class="panel-title">导出说明</div>
         <div class="text-muted" style="font-size:12px;line-height:1.8">
-          导出按当前「周次 + 目标」筛选，后端流式生成 UTF-8 CSV，浏览器直接下载。<br />
+          导出按当前「周次 + 目标」筛选，生成 UTF-8 CSV，浏览器直接下载。<br />
           CSV 仅保留 <b>[IMAGE]</b> 标记与图片数量，不嵌入图片、不输出临时访问链接，避免文件体积膨胀；短时效链接写入归档也没有意义。
         </div>
       </div>
@@ -51,7 +51,10 @@ import EChartWrap from '@/components/EChartWrap.vue';
 import { reportApi, goalApi } from '@/api';
 import { today, mondayOf, sundayOf, weekLabels, rateText } from '@/utils/date';
 import type { GoalVO, WeeklyVO } from '@/types';
+import { chartPalette } from '@/utils/chartTheme';
+import { useThemeStore } from '@/stores/theme';
 
+const theme = useThemeStore();
 const loading = ref(false);
 const exporting = ref(false);
 const weekStart = ref(mondayOf(today()));
@@ -84,46 +87,54 @@ async function exportCsv(): Promise<void> {
   }
 }
 
-const trendOption = computed<EChartsOption>(() => ({
-  backgroundColor: 'transparent',
-  tooltip: { trigger: 'axis' },
-  grid: { left: 44, right: 16, top: 20, bottom: 28 },
-  xAxis: {
-    type: 'category', data: weekLabels(weekStart.value),
-    axisLine: { lineStyle: { color: '#30363d' } },
-    axisLabel: { color: '#8b949e', fontSize: 11 },
-  },
-  yAxis: {
-    type: 'value', min: 0, max: 100,
-    splitLine: { lineStyle: { color: '#21262d' } },
-    axisLabel: { color: '#8b949e', formatter: '{value}%' },
-  },
-  series: [{
-    type: 'line',
-    data: (data.value?.dailyTrend ?? []).map((p) => p.rate),
-    symbol: 'circle', symbolSize: 6,
-    lineStyle: { color: '#39c5cf', width: 2 },
-    itemStyle: { color: '#39c5cf' },
-    areaStyle: { color: 'rgba(57,197,207,0.10)' },
-  }],
-}));
+const trendOption = computed<EChartsOption>(() => {
+  const p = chartPalette();
+  void theme.mode; // 让配色随主题重算
+  return {
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'axis', textStyle: { color: p.t1 }, backgroundColor: p.raised, borderColor: p.hairline },
+    grid: { left: 44, right: 16, top: 20, bottom: 28 },
+    xAxis: {
+      type: 'category', data: weekLabels(weekStart.value),
+      axisLine: { lineStyle: { color: p.hairline } },
+      axisTick: { show: false },
+      axisLabel: { color: p.t3, fontSize: 11 },
+    },
+    yAxis: {
+      type: 'value', min: 0, max: 100,
+      splitLine: { show: false },
+      axisLabel: { color: p.t3, formatter: '{value}%' },
+    },
+    series: [{
+      type: 'line',
+      data: (data.value?.dailyTrend ?? []).map((x) => x.rate),
+      symbol: 'circle', symbolSize: 5,
+      lineStyle: { color: p.accent, width: 2 },
+      itemStyle: { color: p.accent },
+      areaStyle: { color: p.accentArea },
+    }],
+  };
+});
 
 const subjectOption = computed<EChartsOption>(() => {
+  const p = chartPalette();
+  void theme.mode;
   const rates = data.value?.subjectRates ?? [];
   return {
     backgroundColor: 'transparent',
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', textStyle: { color: p.t1 }, backgroundColor: p.raised, borderColor: p.hairline },
     grid: { left: 90, right: 24, top: 12, bottom: 24 },
-    xAxis: { type: 'value', min: 0, max: 100, splitLine: { lineStyle: { color: '#21262d' } }, axisLabel: { color: '#8b949e' } },
+    xAxis: { type: 'value', min: 0, max: 100, splitLine: { show: false }, axisLabel: { color: p.t3 } },
     yAxis: {
-      type: 'category', data: rates.map((r) => r.name),
-      axisLine: { lineStyle: { color: '#30363d' } },
-      axisLabel: { color: '#8b949e', fontSize: 11 },
+      type: 'category', data: rates.map((x) => x.name),
+      axisLine: { lineStyle: { color: p.hairline } },
+      axisTick: { show: false },
+      axisLabel: { color: p.t3, fontSize: 11 },
     },
     series: [{
-      type: 'bar', data: rates.map((r) => Number(r.completionRate)),
+      type: 'bar', data: rates.map((x) => Number(x.completionRate)),
       barWidth: 12,
-      itemStyle: { color: '#39c5cf', borderRadius: [0, 2, 2, 0] },
+      itemStyle: { color: p.accent, borderRadius: [0, 3, 3, 0] },
     }],
   };
 });

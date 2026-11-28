@@ -3,7 +3,7 @@ import { useUserStore } from '@/stores/user';
 
 /**
  * 登录与注册为公开页面，其余页面需要认证。
- * 守卫通过 /api/auth/me 判定 HttpOnly Cookie 是否有效。
+ * 守卫通过当前部署方式的账号服务验证登录身份。
  */
 const router = createRouter({
   history: createWebHistory(),
@@ -32,6 +32,18 @@ const router = createRouter({
           meta: { title: '主驾驶舱', requiresAuth: true },
         },
         {
+          path: 'tutor',
+          name: 'Tutor',
+          component: () => import('@/views/tutor/TutorView.vue'),
+          meta: { title: 'AI 学习助手', requiresAuth: true },
+        },
+        {
+          path: 'review',
+          name: 'Review',
+          component: () => import('@/views/tutor/ReviewView.vue'),
+          meta: { title: '错题复习', requiresAuth: true },
+        },
+        {
           path: 'goals',
           name: 'Goals',
           component: () => import('@/views/goals/GoalSubjectView.vue'),
@@ -55,6 +67,12 @@ const router = createRouter({
           component: () => import('@/views/archive/ArchiveView.vue'),
           meta: { title: '历史归档', requiresAuth: true },
         },
+        {
+          path: 'admin',
+          name: 'Admin',
+          component: () => import('@/views/admin/AdminView.vue'),
+          meta: { title: '后台管理', requiresAuth: true, admin: true },
+        },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
@@ -71,6 +89,12 @@ router.beforeEach(async (to) => {
   }
   if (!store.user) {
     return { path: '/login', query: to.fullPath === '/' ? {} : { redirect: to.fullPath } };
+  }
+  if (to.meta.admin) {
+    // 管理员页面：以数据库白名单为准，前端只做入口拦截，真实权限由 RPC 强制校验。
+    const { adminApi } = await import('@/api');
+    const allowed = adminApi ? await adminApi.isAdmin().catch(() => false) : false;
+    if (!allowed) return { path: '/dashboard' };
   }
   return true;
 });

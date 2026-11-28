@@ -1,7 +1,6 @@
 # 学习监控驾驶舱 · Study Cockpit
 
-[![release](https://img.shields.io/github/v/release/zx150737/study-cockpit?style=flat-square)](https://github.com/zx150737/study-cockpit/releases/latest)
-[![license](https://img.shields.io/github/license/zx150737/study-cockpit?style=flat-square)](./LICENSE)
+新增 **Cloudflare Pages + Supabase 免费部署方式**：邮箱密码登录，账号数据独立，使用平台网址。请先阅读 [免费版部署指南](免费版部署指南.md)。线上地址：<https://study-cockpit.pages.dev>（当前为 v2.0.0）；下文的 Java/MySQL 部署方式继续保留。
 
 基于 Vue 3、Spring Boot 和 MySQL 的学习计划与复盘网页应用。
 管理目标和科目、安排每日任务、记录完成情况，通过驾驶舱与周报查看学习进度。
@@ -13,7 +12,37 @@
 - 图片记录：上传学习图片，登录鉴权访问，15 天到期清理。
 - 驾驶舱：当日完成率、本周趋势、连续打卡、目标进度及积压任务。
 - 周度分析：科目统计、周报 CSV 导出、历史周结算与归档。
+- AI 学习助手：贴题获得分步讲解、考点与变式练习；一键加入错题本。
+- 错题复习：按遗忘曲线（1/2/4/8/16 天）安排复习，自评三档调整下次到期。
 - 用户账号：自助注册、账号密码登录与修改密码，业务数据按用户隔离；注册入口由服务器开关控制。
+
+## AI 学习助手（仅云端版）
+
+云端版新增两个页面：`/tutor`（提问与讲解）与 `/review`（错题复习）。设计取舍是**只做讲解与练习，不做代做**：
+
+- 只发送用户自己输入或粘贴的题面文本；不上传整页截图、不读取课程账号、不碰任何验证码。
+- 讲解以「思路 → 步骤 → 结论 → 变式练习」返回；练习的答案默认折叠，让使用者先自己算。
+- 作答、提交、判分仍由使用者本人在平台完成。
+
+数据在 `sc_ai_threads`（提问与结构化答复）和 `sc_ai_cards`（复习卡）两张表；答复列由边缘函数用 service_role 写入，客户端伪造会被 `sc_ai_guard` 拒绝。
+
+模型调用发生在边缘函数 `supabase/functions/ai-tutor`，密钥只存在服务端环境变量里，前端与数据库都拿不到。配置一次即可：
+
+```text
+Supabase 控制台 → Project Settings → Edge Functions → Secrets → 新增
+  DEEPSEEK_API_KEY = sk-...      （必填）
+  DEEPSEEK_MODEL   = deepseek-chat（可选，默认即此值）
+```
+
+未配置密钥时，页面会明确提示「管理员尚未配置 AI 密钥」，不会静默失败。每个账号每天有 60 次讲解额度上限（`ai-tutor` 里的 `DAILY_LIMIT`），避免共享密钥被刷爆。
+
+| 文件 | 作用 |
+| --- | --- |
+| `supabase/migrations/202611280001_tutor.sql` | 两张表、RLS、守卫触发器、`sc_ai_read` / `sc_ai_write` |
+| `supabase/functions/ai-tutor/index.ts` | 校验登录态与归属、配额、调用模型、写入答复 |
+| `frontend/src/views/tutor/TutorView.vue` | 提问与讲解渲染 |
+| `frontend/src/views/tutor/ReviewView.vue` | 复习队列与卡片管理 |
+| `frontend/tests/tutor-db.test.mjs` | 用 PGlite 跑迁移并验证权限与复习算法 |
 
 ## 技术栈
 

@@ -40,3 +40,6 @@ logs/
 mysql-data/
 uploads/
 backups/
+
+# Supabase CLI 本地状态（含项目关联信息）
+supabase/.temp/

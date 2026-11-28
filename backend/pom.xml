@@ -13,7 +13,7 @@
 
     <groupId>com.study</groupId>
     <artifactId>study-cockpit</artifactId>
-    <version>1.1.0</version>
+    <version>2.0.0</version>
     <name>study-cockpit</name>
     <description>个人备考学习监控驾驶舱 · 后端服务</description>
 

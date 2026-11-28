@@ -11,7 +11,7 @@
 
     <div v-if="images.length" class="thumb-list">
       <div v-for="img in images" :key="img.id" class="thumb">
-        <!-- 临时访问地址带 HMAC 签名，浏览器自动携带 HttpOnly Cookie 完成鉴权 -->
+        <!-- 仅展示经过账号鉴权取得的临时图片地址。 -->
         <img :src="img.temporaryUrl" :alt="img.originalName" />
         <div class="thumb-meta" :title="img.originalName">{{ img.originalName }}</div>
         <div class="thumb-meta text-muted">到期 {{ img.expireTime?.slice(0, 10) }}</div>
@@ -51,7 +51,7 @@ function beforeUpload(file: File): boolean {
   return ok;
 }
 
-// 复用统一 axios 实例，确保 multipart 请求也带上 CSRF 头
+// 两种部署方式各自携带登录凭据，由对应服务验证文件与任务归属。
 async function customUpload(options: { file: File; onSuccess: () => void; onError: (e: unknown) => void }): Promise<void> {
   uploading.value = true;
   try {
